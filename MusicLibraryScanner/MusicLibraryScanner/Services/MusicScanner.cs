@@ -33,12 +33,15 @@ namespace MusicLibraryScanner.Services
                 return;
             }
 
+            var stats = new ProcessingStats();
+            stats.Start();
+
             var artistDirs = Directory.GetDirectories(rootPath);
 
             foreach (var artistDir in artistDirs)
             {
                 var artistName = ParsingHelpers.ParseArtistName(artistDir);
-                int artistId = await GetOrCreateArtistIdAsync(artistName);
+                var artistId = await GetOrCreateArtistIdAsync(artistName);
 
                 Log.Info($"Processing artist: {artistName} (ID={artistId})");
 
@@ -46,11 +49,14 @@ namespace MusicLibraryScanner.Services
 
                 using var albumSemaphore = new SemaphoreSlim(MaxConcurrentAlbums);
 
-                var albumTasks = albumDirs.Select(albumDir => ProcessAlbumWithSemaphoreAsync(albumDir, artistId, artistName, albumSemaphore));
+                var albumTasks = albumDirs.Select(albumDir => ProcessAlbumWithSemaphoreAsync(albumDir, artistId, artistName, albumSemaphore, stats));
                 await Task.WhenAll(albumTasks);
+                stats.IncrementArtist();
             }
 
             Log.Info("Scan complete.");
+            stats.PrintReport();
+            stats.Stop();
         }
 
         private async Task<int> GetOrCreateArtistIdAsync(string artistName)
@@ -64,12 +70,12 @@ namespace MusicLibraryScanner.Services
             return _albumCache.GetOrAdd(key, _ => albumRepo.GetOrCreateIdAsync(artistId, year, albumTitle).Result);
         }
 
-        private async Task ProcessAlbumWithSemaphoreAsync(string albumDir, int artistId, string artistName, SemaphoreSlim albumSemaphore)
+        private async Task ProcessAlbumWithSemaphoreAsync(string albumDir, int artistId, string artistName, SemaphoreSlim albumSemaphore, ProcessingStats stats)
         {
             await albumSemaphore.WaitAsync();
             try
             {
-                await ProcessAlbumAsync(albumDir, artistId, artistName);
+                await ProcessAlbumAsync(albumDir, artistId, artistName, stats);
             }
             finally
             {
@@ -77,7 +83,7 @@ namespace MusicLibraryScanner.Services
             }
         }
 
-        private async Task ProcessAlbumAsync(string albumDir, int artistId, string artistName)
+        private async Task ProcessAlbumAsync(string albumDir, int artistId, string artistName, ProcessingStats stats)
         {
             var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
             var albumId = await GetOrCreateAlbumIdAsync(artistId, albumTitle, year);
@@ -88,16 +94,17 @@ namespace MusicLibraryScanner.Services
 
             using var trackSemaphore = new SemaphoreSlim(MaxConcurrentTracks);
 
-            var trackTasks = trackFiles.Select(trackFile => ProcessTrackWithSemaphoreAsync(trackFile, artistId, albumId, artistName, albumTitle, year, trackSemaphore));
+            var trackTasks = trackFiles.Select(trackFile => ProcessTrackWithSemaphoreAsync(trackFile, artistId, albumId, artistName, albumTitle, year, trackSemaphore, stats));
             await Task.WhenAll(trackTasks);
+            stats.IncrementAlbum();
         }
 
-        private async Task ProcessTrackWithSemaphoreAsync(string trackFile, int artistId, int albumId, string defaultArtist, string defaultAlbum, int defaultYear, SemaphoreSlim trackSemaphore)
+        private async Task ProcessTrackWithSemaphoreAsync(string trackFile, int artistId, int albumId, string defaultArtist, string defaultAlbum, int defaultYear, SemaphoreSlim trackSemaphore, ProcessingStats stats)
         {
             await trackSemaphore.WaitAsync();
             try
             {
-                await ProcessTrackAsync(trackFile, artistId, albumId, defaultArtist, defaultAlbum, defaultYear);
+                await ProcessTrackAsync(trackFile, artistId, albumId, defaultArtist, defaultAlbum, defaultYear, stats);
             }
             finally
             {
@@ -105,7 +112,7 @@ namespace MusicLibraryScanner.Services
             }
         }
 
-        private async Task ProcessTrackAsync(string trackFile, int artistId, int albumId, string defaultArtist, string defaultAlbum, int defaultYear)
+        private async Task ProcessTrackAsync(string trackFile, int artistId, int albumId, string defaultArtist, string defaultAlbum, int defaultYear, ProcessingStats stats)
         {
             try
             {
@@ -123,7 +130,6 @@ namespace MusicLibraryScanner.Services
                 var trackMusicBrainzReleaseId = tag.MusicBrainzReleaseId;
                 var trackMusicBrainzArtistId = tag.MusicBrainzArtistId;
 
-
                 var trackId = await trackRepo.GetOrCreateIdAsync(
                     albumId,
                     artistId,
@@ -138,9 +144,7 @@ namespace MusicLibraryScanner.Services
                     trackMusicBrainzReleaseId,
                     trackMusicBrainzArtistId
                 );
-
-                var t = trackId;
-                var t2 = trackId;
+                stats.IncrementTrack();
 
                 Log.Info($"    Track added: {trackNumber:00} - {trackTitle} (ID={trackId}, {duration}s)");
             }
