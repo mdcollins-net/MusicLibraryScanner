@@ -7,21 +7,14 @@ namespace MusicLibraryScanner.Repositories
 {
     public interface IArtistRepository
     {
-        Task<int> GetOrCreateArtistIdAsync(string name);
+        Task<int> GetOrCreateIdAsync(string name);
     }
 
-    public class ArtistRepository : IArtistRepository
+    public class ArtistRepository(PostgresConnectionFactory connFactory) : IArtistRepository
     {
-        private readonly PostgresConnectionFactory _connFactory;
-
-        public ArtistRepository(PostgresConnectionFactory connFactory)
+        public async Task<int> GetOrCreateIdAsync(string name)
         {
-            _connFactory = connFactory;
-        }
-
-        public async Task<int> GetOrCreateArtistIdAsync(string name)
-        {
-            using var conn = _connFactory.CreateConnection();
+            using var conn = connFactory.CreateConnection();
             const string selectSql = "SELECT ID FROM Artists WHERE Name = @Name LIMIT 1";
             var existing = await conn.QueryFirstOrDefaultAsync<int?>(selectSql, new { Name = name });
             if (existing.HasValue) return existing.Value;

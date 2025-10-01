@@ -4,18 +4,11 @@ using Npgsql;
 
 namespace MusicLibraryScanner.Data
 {
-    public class PostgresConnectionFactory
+    public class PostgresConnectionFactory(string connectionString)
     {
-        private readonly string _connectionString;
-
-        public PostgresConnectionFactory(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
         public IDbConnection CreateConnection()
         {
-            var conn = new NpgsqlConnection(_connectionString);
+            var conn = new NpgsqlConnection(connectionString);
             conn.Open();
             return conn;
         }
