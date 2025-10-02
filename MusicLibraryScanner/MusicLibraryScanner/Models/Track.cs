@@ -1,9 +1,7 @@
 // Models/Track.cs
 
-namespace MusicLibraryScanner.Models
-{
-    public class Track
-    {
+namespace MusicLibraryScanner.Models {
+    public class Track {
         public int ID { get; set; }
         public int AlbumId { get; set; }
         public int ArtistId { get; set; }

@@ -2,10 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using log4net;
 
-namespace MusicLibraryScanner.Helpers
-{
-    public class ProcessingStats
-    {
+namespace MusicLibraryScanner.Helpers {
+    public class ProcessingStats {
         private static readonly ILog Log = LogManager.GetLogger(typeof(ProcessingStats));
         private readonly Stopwatch _stopwatch = new();
 
@@ -16,14 +14,12 @@ namespace MusicLibraryScanner.Helpers
         private int AlbumCount { get; set; }
         private int ArtistCount { get; set; }
 
-        public void Start()
-        {
+        public void Start() {
             _startTime = DateTime.Now;
             _stopwatch.Start();
         }
 
-        public void Stop()
-        {
+        public void Stop() {
             _stopwatch.Stop();
             _endTime = DateTime.Now;
         }
@@ -32,16 +28,14 @@ namespace MusicLibraryScanner.Helpers
         public void IncrementAlbum() => AlbumCount++;
         public void IncrementArtist() => ArtistCount++;
 
-        private string GetDuration()
-        {
+        private string GetDuration() {
             var ts = _stopwatch.Elapsed;
             if (ts.TotalHours >= 1)
                 return $"{(int)ts.TotalHours}h {ts.Minutes}m {ts.Seconds}s";
             return ts.TotalMinutes >= 1 ? $"{(int)ts.TotalMinutes}m {ts.Seconds}s" : $"{ts.Seconds}s";
         }
 
-        private string BuildReport()
-        {
+        private string BuildReport() {
             var ts = _stopwatch.Elapsed;
             var tracksPerSec = ts.TotalSeconds > 0 ? TrackCount / ts.TotalSeconds : 0;
             var tracksPerMin = ts.TotalMinutes > 0 ? TrackCount / ts.TotalMinutes : 0;
@@ -68,8 +62,7 @@ namespace MusicLibraryScanner.Helpers
             return sb.ToString();
         }
 
-        public void PrintReport()
-        {
+        public void PrintReport() {
             var report = BuildReport();
 
             // Console

@@ -7,21 +7,19 @@ using MusicLibraryScanner.Data;
 using MusicLibraryScanner.Repositories;
 using MusicLibraryScanner.Services;
 
-namespace MusicLibraryScanner
-{
-    internal class Program
-    {
+namespace MusicLibraryScanner {
+    internal class Program {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Program));
 
-        private static async Task Main(string[] args)
-        {
+        private static async Task Main(string[] args) {
             // Configure log4net
             var logRepo = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepo, new FileInfo("log4net.config"));
 
             Log.Info("Application starting...");
 
-            const string connectionString = "Host=localhost;Port=5432;Username=postgres;Password=password;Database=Music";
+            const string connectionString =
+                "Host=localhost;Port=5432;Username=postgres;Password=password;Database=Music";
             var connFactory = new PostgresConnectionFactory(connectionString);
 
             var artistRepo = new ArtistRepository(connFactory);
