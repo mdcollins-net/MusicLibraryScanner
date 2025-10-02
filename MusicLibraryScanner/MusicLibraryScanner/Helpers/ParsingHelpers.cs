@@ -1,6 +1,5 @@
 // Helpers/ParsingHelpers.cs
-using System;
-using System.IO;
+
 using System.Text.RegularExpressions;
 
 namespace MusicLibraryScanner.Helpers
@@ -23,12 +22,11 @@ namespace MusicLibraryScanner.Helpers
         public static (int year, string title) ParseAlbumFolder(string albumFolder)
         {
             var folderName = Path.GetFileName(albumFolder.TrimEnd(Path.DirectorySeparatorChar));
-            var match = Regex.Match(folderName, @"^(?<year>\d{4})\s*-\s*(?<title>.+)$");
+            var match = AlbumRegex().Match(folderName);
             if (!match.Success)
                 throw new FormatException($"Album folder name '{folderName}' is not in the expected format '<YYYY> - <Album Title>'");
-
-            int year = int.Parse(match.Groups["year"].Value);
-            string title = match.Groups["title"].Value.Trim();
+            var year = int.Parse(match.Groups["year"].Value);
+            var title = match.Groups["title"].Value.Trim();
             return (year, title);
         }
 
@@ -42,7 +40,6 @@ namespace MusicLibraryScanner.Helpers
             var match = TrackRegex().Match(fileName);
             if (!match.Success)
                 throw new FormatException($"Track file name '{fileName}' is not in the expected format '<XX> - <Track Title>'");
-
             var trackNumber = int.Parse(match.Groups["track"].Value);
             var title = match.Groups["title"].Value.Trim();
             return (trackNumber, title);
@@ -50,5 +47,7 @@ namespace MusicLibraryScanner.Helpers
 
         [GeneratedRegex(@"^(?<track>\d{2})\s*-\s*(?<title>.+)$")]
         private static partial Regex TrackRegex();
+        [GeneratedRegex(@"^(?<year>\d{4})\s*-\s*(?<title>.+)$")]
+        private static partial Regex AlbumRegex();
     }
 }

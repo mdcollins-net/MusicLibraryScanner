@@ -1,9 +1,7 @@
 ﻿// Program.cs
-using System;
-using System.Threading.Tasks;
+
 using log4net;
 using log4net.Config;
-using System.IO;
 using System.Reflection;
 using MusicLibraryScanner.Data;
 using MusicLibraryScanner.Repositories;
@@ -32,8 +30,8 @@ namespace MusicLibraryScanner
 
             var scanner = new MusicScanner(artistRepo, albumRepo, trackRepo);
 
-            //const string musicRoot = @"C:\Projects\test\test-lib-01\Music\Artists"; // Adjust path
-            const string musicRoot = @"C:\Music\Artists"; // Adjust path
+            const string musicRoot = @"C:\Projects\test\test-lib-01\Music\Artists"; // Adjust path
+            //const string musicRoot = @"C:\Music\Artists"; // Adjust path
             await scanner.ScanAsync(musicRoot);
 
             Log.Info("Application finished.");

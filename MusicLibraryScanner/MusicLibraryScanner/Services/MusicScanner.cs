@@ -1,14 +1,9 @@
 // Services/MusicScanner.cs
-using System;
+
 using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using log4net;
 using MusicLibraryScanner.Helpers;
 using MusicLibraryScanner.Repositories;
-using TagLib;
 
 namespace MusicLibraryScanner.Services
 {

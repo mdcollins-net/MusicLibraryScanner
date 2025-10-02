@@ -1,3 +1,5 @@
+// Models/Album.cs
+
 namespace MusicLibraryScanner.Models
 {
     public class Album

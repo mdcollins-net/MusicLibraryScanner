@@ -1,4 +1,5 @@
 // Models/Artist.cs
+
 namespace MusicLibraryScanner.Models
 {
     public class Artist

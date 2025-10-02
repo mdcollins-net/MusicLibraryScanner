@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="72ca7bf1-5fe6-4aa5-8c2d-3dd092f81eaf" name="Music Mapping">
+      <data-sources db="7f741a3e-a44f-4fd7-95b4-25fc51328641" ddl="a10ea079-eb36-4c37-bb78-97daa81404ba" />
+    </mapping>
+  </component>
+  <component name="SqlDataSourceStorage">
+    <option name="dataSources">
+      <list>
+        <State>
+          <option name="id" value="a10ea079-eb36-4c37-bb78-97daa81404ba" />
+          <option name="name" value="Music (DDL)" />
+          <option name="dbmsName" value="POSTGRES" />
+          <option name="parent" value="7f741a3e-a44f-4fd7-95b4-25fc51328641" />
+          <option name="urls">
+            <array />
+          </option>
+          <option name="outLayout" value="File per object by schema.groovy" />
+        </State>
+      </list>
+    </option>
+  </component>
+</project>
