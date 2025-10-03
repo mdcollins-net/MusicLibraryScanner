@@ -21,6 +21,11 @@ namespace MusicLibraryScanner.Helpers {
         /// </summary>
         private int TableSpacing { get; set; } = 4;
 
+        /// <summary>
+        /// If true, the report is written only to the log file (no console output).
+        /// </summary>
+        public bool LogOnly { get; set; } = false;
+
         public void Start() {
             _startTime = DateTime.Now;
             _stopwatch.Start();
@@ -75,7 +80,6 @@ namespace MusicLibraryScanner.Helpers {
             var leftWidth = left.Max(l => l.Length);
             var rightWidth = right.Max(r => r.Length);
 
-
             // Pad shorter table so bottoms align
             while (left.Count < maxLines)
                 left.Insert(left.Count - 1, new string(' ', leftWidth));
@@ -114,16 +118,13 @@ namespace MusicLibraryScanner.Helpers {
             var statsTable = BuildStatsTable();
             var timesTable = BuildTimesTable(tracksPerSec, tracksPerMin);
 
-            // Check console width
             var requiredWidth = statsTable.Max(l => l.Length) + TableSpacing + timesTable.Max(l => l.Length);
 
-            if (Console.WindowWidth >= requiredWidth + 2) // allow margin
-            {
+            if (!LogOnly && Console.WindowWidth >= requiredWidth + 2) {
                 // Side-by-side
                 sb.AppendLine(CombineTables(statsTable, timesTable, TableSpacing));
-            }
-            else {
-                // Fall back to stacked layout
+            } else {
+                // Stacked layout (also used in log-only mode)
                 foreach (var line in statsTable) sb.AppendLine(line);
                 sb.AppendLine();
                 foreach (var line in timesTable) sb.AppendLine(line);
@@ -135,8 +136,10 @@ namespace MusicLibraryScanner.Helpers {
         public void PrintReport() {
             var report = BuildReport();
 
-            // Console: clean table (no prefixes)
-            Console.WriteLine(report);
+            if (!LogOnly) {
+                // Console: clean table (no prefixes)
+                Console.WriteLine(report);
+            }
 
             // Log file: summary at INFO level
             Log.Info(report);
