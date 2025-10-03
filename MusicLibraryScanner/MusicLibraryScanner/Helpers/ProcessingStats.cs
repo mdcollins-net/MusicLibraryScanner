@@ -77,15 +77,14 @@ namespace MusicLibraryScanner.Helpers {
 
         private static string CombineTables(List<string> left, List<string> right, int spacing) {
             var sb = new StringBuilder();
-            var maxLines = Math.Max(left.Count, right.Count);
+            var leftWidth = left.Max(l => l.Length);
 
+            var maxLines = Math.Max(left.Count, right.Count);
             for (var i = 0; i < maxLines; i++) {
-                var leftLine = i < left.Count ? left[i] : string.Empty;
+                var leftLine = i < left.Count ? left[i].PadRight(leftWidth) : new string(' ', leftWidth);
                 var rightLine = i < right.Count ? right[i] : string.Empty;
 
-                sb.AppendLine(leftLine.PadRight(left.Max(l => l.Length))
-                              + new string(' ', spacing)
-                              + rightLine);
+                sb.AppendLine(leftLine + new string(' ', spacing) + rightLine);
             }
 
             return sb.ToString();
@@ -116,7 +115,7 @@ namespace MusicLibraryScanner.Helpers {
             var requiredWidth = statsTable.Max(l => l.Length) + TableSpacing + timesTable.Max(l => l.Length);
 
             if (!LogOnly && Console.WindowWidth >= requiredWidth + 2) {
-                // Side-by-side
+                // Side-by-side, no padding of shorter table
                 sb.AppendLine(CombineTables(statsTable, timesTable, TableSpacing));
             } else {
                 // Stacked layout (or log-only mode)
