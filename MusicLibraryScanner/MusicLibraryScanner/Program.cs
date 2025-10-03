@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿// Program.cs
+
+using System.Reflection;
 using System.Text;
 using log4net;
 using log4net.Config;
