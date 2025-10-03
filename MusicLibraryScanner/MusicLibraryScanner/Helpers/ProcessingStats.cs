@@ -51,13 +51,17 @@ namespace MusicLibraryScanner.Helpers {
             sb.AppendLine($"| Artists     | {ArtistCount,19} |");
             sb.AppendLine($"| Albums      | {AlbumCount,19} |");
             sb.AppendLine($"| Tracks      | {TrackCount,19} |");
-            sb.AppendLine($"| Duration    | {GetDuration(),19} |");
             sb.AppendLine("+-------------+---------------------+");
-            sb.AppendLine($"| Speed (s)   | {tracksPerSec,19:F2} |");
-            sb.AppendLine($"| Speed (min) | {tracksPerMin,19:F2} |");
-            sb.AppendLine($"| Start Time  | {_startTime:yyyy-MM-dd HH:mm:ss} |");
-            sb.AppendLine($"| End Time    | {_endTime:yyyy-MM-dd HH:mm:ss} |");
-            sb.AppendLine("+-------------+---------------------+");
+
+            sb.AppendLine("+-----------------------------------------+");
+            sb.AppendLine("| Speeds / Times                          |");
+            sb.AppendLine("+-------------------+---------------------+");
+            sb.AppendLine($"| Duration          | {GetDuration(),19} |");
+            sb.AppendLine($"| Start Time        | {_startTime:yyyy-MM-dd HH:mm:ss} |");
+            sb.AppendLine($"| End Time          | {_endTime:yyyy-MM-dd HH:mm:ss} |");
+            sb.AppendLine($"| Tracks per second | {tracksPerSec,19:F2} |");
+            sb.AppendLine($"| Tracks per minute | {tracksPerMin,19:F2} |");
+            sb.AppendLine("+-------------------+---------------------+");
             sb.AppendLine("====================================");
             return sb.ToString();
         }
