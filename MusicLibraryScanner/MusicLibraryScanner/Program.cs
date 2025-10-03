@@ -6,6 +6,7 @@ using log4net;
 using log4net.Config;
 using Microsoft.Extensions.Configuration;
 
+using MusicLibraryScanner.Config;
 using MusicLibraryScanner.Data;
 using MusicLibraryScanner.Helpers;
 using MusicLibraryScanner.Repositories;
@@ -20,12 +21,24 @@ class Program {
             return;
         }
 
-        // ✅ Check for version flag
+        // ✅ Version flag
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) ||
                           a.Equals("-v", StringComparison.OrdinalIgnoreCase))) {
             PrintVersion();
             return;
         }
+
+        // ✅ Load configuration (supports env-specific overrides + env vars)
+        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        // ✅ Bind to strongly typed object
+        var appConfig = configuration.Get<AppConfig>();
 
         // Register legacy encodings (fixes log4net error with codepage 437)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -34,19 +47,10 @@ class Program {
         var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
         XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
 
-        // Load configuration (supports appsettings.Development.json + env vars)
-        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
-        var config = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables()
-            .Build();
-
-        // Default root path (can override via args)
+        // Root path (from args or config fallback)
         var rootPath = args.Length > 0 && !args[0].StartsWith("-")
             ? args[0]
-            : @"C:\Projects\test\test-lib-01\Music\Artists";
+            : appConfig.Settings.DefaultRootPath;
 
         // Check for flags
         var logOnly = args.Any(a =>
@@ -61,12 +65,12 @@ class Program {
                 Console.WriteLine("[WARN] " + message);
                 Console.ResetColor();
             }
-            log4net.LogManager.GetLogger(typeof(Program)).Warn(message);
+            LogManager.GetLogger(typeof(Program)).Warn(message);
             return;
         }
 
         // ✅ Get connection string from config
-        var connString = config.GetConnectionString("Postgres");
+        var connString = appConfig.ConnectionStrings.Postgres;
         if (string.IsNullOrEmpty(connString)) {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[ERROR] No Postgres connection string found in config.");
@@ -76,12 +80,19 @@ class Program {
 
         var connFactory = new PostgresConnectionFactory(connString);
 
-        // Pass it to repositories
+        // Repositories
         IArtistRepository artistRepo = new ArtistRepository(connFactory);
         IAlbumRepository albumRepo = new AlbumRepository(connFactory);
         ITrackRepository trackRepo = new TrackRepository(connFactory);
 
-        var scanner = new MusicScanner(artistRepo, albumRepo, trackRepo);
+        // Discogs client
+        var discogsClient = new DiscogsApiClient(
+            appConfig.Discogs.PersonalAccessToken,
+            appConfig.Discogs.UserAgent
+        );
+
+        // Scanner (optionally: pass concurrency settings from config)
+        var scanner = new MusicScanner(artistRepo, albumRepo, trackRepo, discogsClient);
 
         var stats = new ProcessingStats {
             LogOnly = logOnly
@@ -102,14 +113,12 @@ class Program {
         Console.WriteLine("dotnet run -- [rootPath] [options]");
         Console.WriteLine();
 
-        // Arguments
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Arguments:");
         Console.ResetColor();
-        Console.WriteLine("  rootPath        Path to the music library folder (default: C:\\Music)");
+        Console.WriteLine("  rootPath        Path to the music library folder (default from appsettings.json)");
         Console.WriteLine();
 
-        // Options
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Options:");
         Console.ResetColor();
@@ -118,13 +127,11 @@ class Program {
         Console.WriteLine("  --version, -v    Show program version");
         Console.WriteLine();
 
-        // Configuration
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Configuration:");
         Console.ResetColor();
-        Console.WriteLine("  The application reads settings from appsettings.json by default.");
-        Console.WriteLine("  You can override with environment-specific files (e.g. appsettings.Development.json).");
-        Console.WriteLine("  Set DOTNET_ENVIRONMENT=Development to load appsettings.Development.json.");
+        Console.WriteLine("  Reads settings from appsettings.json by default.");
+        Console.WriteLine("  Override with appsettings.{Environment}.json (e.g. Development).");
         Console.WriteLine("  Environment variables can also override settings, e.g.:");
 
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -132,7 +139,6 @@ class Program {
         Console.ResetColor();
         Console.WriteLine();
 
-        // Examples
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Examples:");
         Console.ResetColor();

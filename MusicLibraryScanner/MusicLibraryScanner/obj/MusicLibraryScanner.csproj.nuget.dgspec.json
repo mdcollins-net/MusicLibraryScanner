@@ -52,6 +52,10 @@
               "target": "Package",
               "version": "[9.0.0-preview.3.24209.3, )"
             },
+            "Microsoft.Extensions.Configuration.Binder": {
+              "target": "Package",
+              "version": "[9.0.9, )"
+            },
             "Microsoft.Extensions.Configuration.EnvironmentVariables": {
               "target": "Package",
               "version": "[9.0.0-preview.3.24209.3, )"

@@ -1,18 +1,26 @@
-// Services/MusicScanner.cs
-
 using System.Collections.Concurrent;
 using log4net;
-
 using MusicLibraryScanner.Helpers;
 using MusicLibraryScanner.Models;
 using MusicLibraryScanner.Repositories;
 
 namespace MusicLibraryScanner.Services {
-    public class MusicScanner(IArtistRepository artistRepo, IAlbumRepository albumRepo, ITrackRepository trackRepo) {
+    public class MusicScanner(
+        IArtistRepository artistRepo,
+        IAlbumRepository albumRepo,
+        ITrackRepository trackRepo,
+        DiscogsApiClient discogsClient
+    ) {
         private static readonly ILog Log = LogManager.GetLogger(typeof(MusicScanner));
 
         private const int MaxConcurrentAlbums = 4;
         private const int MaxConcurrentTracks = 8;
+
+        // ✅ store injected dependencies in fields
+        private readonly IArtistRepository _artistRepo = artistRepo;
+        private readonly IAlbumRepository _albumRepo = albumRepo;
+        private readonly ITrackRepository _trackRepo = trackRepo;
+        private readonly DiscogsApiClient _discogsClient = discogsClient;
 
         // Caches to minimize DB roundtrips
         private readonly ConcurrentDictionary<string, int> _artistCache = new();
@@ -53,7 +61,7 @@ namespace MusicLibraryScanner.Services {
             }
             finally {
                 stats.Stop();
-                stats.PrintReport(); // INFO level inside ProcessingStats → Console + File
+                stats.PrintReport();
             }
         }
 
@@ -73,41 +81,23 @@ namespace MusicLibraryScanner.Services {
                 Log.Warn($"Failed to parse artist.nfo for '{artistName}': {ex.Message}");
             }
 
-            // fallback to minimal Artist
             return new Artist { Name = artistName };
         }
 
-        private static async Task<Album> LoadAlbumFromDirectoryAsync(string albumDir) {
-            var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
-            var nfoPath = Path.Combine(albumDir, "album.nfo");
-
-            if (!File.Exists(nfoPath)) return new Album { Title = albumTitle, Year = year};
-            try {
-                var parsed = AlbumNfoParser.Parse(nfoPath);
-                if (parsed != null) {
-                    Log.Debug($"Loaded album metadata from NFO for '{albumTitle}'");
-                    return parsed;
-                }
-            }
-            catch (Exception ex) {
-                Log.Warn($"Failed to parse album.nfo for '{albumTitle}': {ex.Message}");
-            }
-
-            // fallback to minimal Artist
-            return new Album {
-                Title = albumTitle,
-                Year = year
-            };
-        }
-
         private async Task<int> GetOrCreateArtistIdAsync(Artist artist) {
-            return _artistCache.GetOrAdd(artist.Name,
-                _ => artistRepo.GetOrCreateIdAsync(artist).Result);
+            return _artistCache.GetOrAdd(
+                artist.Name,
+                _ => _artistRepo.GetOrCreateIdAsync(artist).Result
+            );
         }
 
-        private async Task<int> GetOrCreateAlbumIdAsync(int artistId, string albumTitle, int year) {
-            var key = (artistId, albumTitle);
-            return _albumCache.GetOrAdd(key, _ => albumRepo.GetOrCreateIdAsync(artistId, year, albumTitle).Result);
+        private async Task<int> GetOrCreateAlbumIdAsync(Album album) {
+            var key = (album.ArtistID, album.Title);
+            return _albumCache.GetOrAdd(
+                key,
+                _ => _albumRepo.GetOrCreateIdAsync(album.ArtistID, album.Year, album.Title, album.DiscogsReleaseId)
+                    .Result
+            );
         }
 
         private async Task ProcessAlbumWithSemaphoreAsync(string albumDir, int artistId, string artistName,
@@ -123,17 +113,45 @@ namespace MusicLibraryScanner.Services {
 
         private async Task ProcessAlbumAsync(string albumDir, int artistId, string artistName, ProcessingStats stats) {
             var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
-            var album = await LoadAlbumFromDirectoryAsync(albumDir);
-            var albumId = await GetOrCreateAlbumIdAsync(artistId, albumTitle, year);
+            var nfoPath = Path.Combine(albumDir, "album.nfo");
 
-            Log.Debug($"  Processing album: {year} - {albumTitle} (ID={albumId})");
+            Album album;
+            if (File.Exists(nfoPath)) {
+                var parsed = AlbumNfoParser.Parse(nfoPath, artistId);
+                album = parsed ?? new Album { ArtistID = artistId, Title = albumTitle, Year = year };
+
+                if (parsed != null)
+                    Log.Debug($"Loaded album metadata from NFO for '{albumTitle}'");
+            }
+            else {
+                album = new Album { ArtistID = artistId, Title = albumTitle, Year = year };
+            }
+
+            if (album.DiscogsReleaseId == null) {
+                try {
+                    var releaseId = await _discogsClient.FindReleaseIdAsync(artistName, album.Title, album.Year);
+                    if (releaseId.HasValue) {
+                        album.DiscogsReleaseId = releaseId;
+                        Log.Info(
+                            $"Looked up DiscogsReleaseId={releaseId} for album '{album.Title}' ({album.Year}) by {artistName}");
+                    }
+                }
+                catch (Exception ex) {
+                    Log.Warn($"Discogs lookup failed for '{album.Title}' ({album.Year}): {ex.Message}");
+                }
+            }
+
+            var albumId = await GetOrCreateAlbumIdAsync(album);
+
+            Log.Debug($"  Processing album: {album.Year} - {album.Title} (ID={albumId})");
 
             var trackFiles = Directory.GetFiles(albumDir, "*.flac");
 
             using var trackSemaphore = new SemaphoreSlim(MaxConcurrentTracks);
+            var trackTasks = trackFiles.Select(trackFile =>
+                ProcessTrackWithSemaphoreAsync(trackFile, artistId, albumId,
+                    artistName, album.Title, album.Year ?? 0, trackSemaphore, stats));
 
-            var trackTasks = trackFiles.Select(trackFile => ProcessTrackWithSemaphoreAsync(trackFile, artistId, albumId,
-                artistName, albumTitle, year, trackSemaphore, stats));
             await Task.WhenAll(trackTasks);
 
             stats.IncrementAlbum();
@@ -168,7 +186,7 @@ namespace MusicLibraryScanner.Services {
                 var trackMusicBrainzReleaseId = tag.MusicBrainzReleaseId;
                 var trackMusicBrainzArtistId = tag.MusicBrainzArtistId;
 
-                var trackId = await trackRepo.GetOrCreateIdAsync(
+                var trackId = await _trackRepo.GetOrCreateIdAsync(
                     albumId,
                     artistId,
                     trackAlbum,
@@ -182,6 +200,7 @@ namespace MusicLibraryScanner.Services {
                     trackMusicBrainzReleaseId,
                     trackMusicBrainzArtistId
                 );
+
                 stats.IncrementTrack();
 
                 Log.Debug($"    Track added: {trackNumber:00} - {trackTitle} (ID={trackId}, {duration}s)");

@@ -36,3 +36,4 @@ C:\Projects\Music Library Scanner\MusicLibraryScanner\MusicLibraryScanner\obj\De
 C:\Projects\Music Library Scanner\MusicLibraryScanner\MusicLibraryScanner\obj\Debug\net9.0\MusicLibraryScanner.pdb
 C:\Projects\Music Library Scanner\MusicLibraryScanner\MusicLibraryScanner\obj\Debug\net9.0\MusicLibraryScanner.genruntimeconfig.cache
 C:\Projects\Music Library Scanner\MusicLibraryScanner\MusicLibraryScanner\obj\Debug\net9.0\ref\MusicLibraryScanner.dll
+C:\Projects\Music Library Scanner\MusicLibraryScanner\MusicLibraryScanner\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll

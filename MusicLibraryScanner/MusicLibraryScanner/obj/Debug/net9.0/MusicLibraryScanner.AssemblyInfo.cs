@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Scans a music library, extracts metadata, and stores it in Postgres.")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0 (stable)+afed396b183aa3bfe39f8857ea5247c6e5eb735e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0 (stable)+a89123b09fe611c664b28662cd73c83b16eb9296")]
 [assembly: System.Reflection.AssemblyProductAttribute("Music Library Scanner")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MusicLibraryScanner")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
