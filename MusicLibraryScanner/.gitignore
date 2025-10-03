@@ -1,22 +1,54 @@
+#####################################
 # Logs
+#####################################
 *.log
 
+#####################################
 # Build outputs
+#####################################
 *.dll
 *.exe
 *.pdb
 *.cache
+*.so
+*.dylib
+*.tmp
+*.bak
 
-# Rider / VS / build system
+# Build directories
 bin/
 obj/
-.vscode/
+out/
+[Bb]uild/
+[Ll]ogs/
+
+#####################################
+# Rider / JetBrains
+#####################################
 .idea/
+*.sln.iml
+
+#####################################
+# Visual Studio
+#####################################
+.vs/
 *.user
 *.suo
 *.userprefs
 *.csproj.user
 
+#####################################
 # OS-specific files
+#####################################
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
