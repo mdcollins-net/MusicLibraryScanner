@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.Text;
 using log4net;
@@ -13,9 +12,9 @@ namespace MusicLibraryScanner.Helpers
         private DateTime _startTime;
         private DateTime _endTime;
 
-        public int TrackCount { get; private set; }
-        public int AlbumCount { get; private set; }
-        public int ArtistCount { get; private set; }
+        private int TrackCount { get; set; }
+        private int AlbumCount { get; set; }
+        private int ArtistCount { get; set; }
 
         public void Start()
         {
@@ -46,15 +45,15 @@ namespace MusicLibraryScanner.Helpers
         private string BuildReport()
         {
             var ts = _stopwatch.Elapsed;
-            double tracksPerSec = ts.TotalSeconds > 0 ? TrackCount / ts.TotalSeconds : 0;
-            double tracksPerMin = ts.TotalMinutes > 0 ? TrackCount / ts.TotalMinutes : 0;
+            var tracksPerSec = ts.TotalSeconds > 0 ? TrackCount / ts.TotalSeconds : 0;
+            var tracksPerMin = ts.TotalMinutes > 0 ? TrackCount / ts.TotalMinutes : 0;
 
             var sb = new StringBuilder();
             sb.AppendLine();
             sb.AppendLine("====================================");
-            sb.AppendLine("  🎵 Music Library Scan Completed 🎵");
+            sb.AppendLine("  * Music Library Scan Completed *");
             sb.AppendLine("====================================");
-
+            sb.AppendLine();
             sb.AppendLine("+-------------+---------------------+");
             sb.AppendLine("| Statistics  |              Counts |");
             sb.AppendLine("+-------------+---------------------+");
@@ -74,7 +73,6 @@ namespace MusicLibraryScanner.Helpers
             sb.AppendLine($"| Tracks per minute | {tracksPerMin,19:F2} |");
             sb.AppendLine("+-------------------+---------------------+");
 
-            sb.AppendLine("====================================");
             return sb.ToString();
         }
 
