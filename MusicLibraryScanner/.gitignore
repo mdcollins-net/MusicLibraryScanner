@@ -38,6 +38,14 @@ out/
 *.csproj.user
 
 #####################################
+# NuGet
+#####################################
+# Packages folder (legacy)
+packages/
+# Global NuGet cache (safety net, rarely in repo)
+.nuget/
+
+#####################################
 # OS-specific files
 #####################################
 # macOS
