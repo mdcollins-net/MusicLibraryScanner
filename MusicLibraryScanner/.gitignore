@@ -1,0 +1,22 @@
+# Logs
+*.log
+
+# Build outputs
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Rider / VS / build system
+bin/
+obj/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+
+# OS-specific files
+.DS_Store
+Thumbs.db
