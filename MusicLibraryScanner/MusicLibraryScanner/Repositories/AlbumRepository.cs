@@ -1,5 +1,6 @@
 // Repositories/AlbumRepository.cs
 
+using System.Threading.Tasks;
 using Dapper;
 using MusicLibraryScanner.Data;
 

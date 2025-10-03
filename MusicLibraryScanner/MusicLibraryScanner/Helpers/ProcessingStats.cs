@@ -50,7 +50,7 @@ namespace MusicLibraryScanner.Helpers {
         }
 
         private List<string> BuildStatsTable() {
-            return [
+            return new List<string> {
                 "+-------------+---------------------+",
                 "| Statistics  | Count               |",
                 "+-------------+---------------------+",
@@ -58,11 +58,11 @@ namespace MusicLibraryScanner.Helpers {
                 $"| Albums      | {AlbumCount,19} |",
                 $"| Tracks      | {TrackCount,19} |",
                 "+-------------+---------------------+"
-            ];
+            };
         }
 
         private List<string> BuildTimesTable(double tracksPerSec, double tracksPerMin) {
-            return [
+            return new List<string> {
                 "+-------------------+---------------------+",
                 "| Metric            | Value               |",
                 "+-------------------+---------------------+",
@@ -72,25 +72,20 @@ namespace MusicLibraryScanner.Helpers {
                 $"| Tracks per second | {tracksPerSec,19:F2} |",
                 $"| Tracks per minute | {tracksPerMin,19:F2} |",
                 "+-------------------+---------------------+"
-            ];
+            };
         }
 
         private static string CombineTables(List<string> left, List<string> right, int spacing) {
-            var maxLines = Math.Max(left.Count, right.Count);
-            var leftWidth = left.Max(l => l.Length);
-            var rightWidth = right.Max(r => r.Length);
-
-            // Pad shorter table so bottoms align
-            while (left.Count < maxLines)
-                left.Insert(left.Count - 1, new string(' ', leftWidth));
-            while (right.Count < maxLines)
-                right.Insert(right.Count - 1, new string(' ', rightWidth));
-
             var sb = new StringBuilder();
+            var maxLines = Math.Max(left.Count, right.Count);
+
             for (var i = 0; i < maxLines; i++) {
-                var leftLine = left[i].PadRight(leftWidth);
-                var rightLine = right[i];
-                sb.AppendLine(leftLine + new string(' ', spacing) + rightLine);
+                var leftLine = i < left.Count ? left[i] : string.Empty;
+                var rightLine = i < right.Count ? right[i] : string.Empty;
+
+                sb.AppendLine(leftLine.PadRight(left.Max(l => l.Length))
+                              + new string(' ', spacing)
+                              + rightLine);
             }
 
             return sb.ToString();
@@ -124,7 +119,7 @@ namespace MusicLibraryScanner.Helpers {
                 // Side-by-side
                 sb.AppendLine(CombineTables(statsTable, timesTable, TableSpacing));
             } else {
-                // Stacked layout (also used in log-only mode)
+                // Stacked layout (or log-only mode)
                 foreach (var line in statsTable) sb.AppendLine(line);
                 sb.AppendLine();
                 foreach (var line in timesTable) sb.AppendLine(line);
@@ -137,11 +132,9 @@ namespace MusicLibraryScanner.Helpers {
             var report = BuildReport();
 
             if (!LogOnly) {
-                // Console: clean table (no prefixes)
                 Console.WriteLine(report);
             }
 
-            // Log file: summary at INFO level
             Log.Info(report);
         }
     }

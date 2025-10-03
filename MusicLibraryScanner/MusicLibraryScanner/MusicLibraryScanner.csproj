@@ -1,26 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+  <PropertyGroup>
+	<OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>MusicLibraryScanner</AssemblyName>
+    <RootNamespace>MusicLibraryScanner</RootNamespace>
 
-    <ItemGroup>
-        <PackageReference Include="Dapper" Version="2.1.66" />
-        <PackageReference Include="log4net" Version="3.2.0" />
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.9" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
-        <PackageReference Include="Npgsql" Version="9.0.3" />
-        <PackageReference Include="TagLibSharp" Version="2.3.0" />
-    </ItemGroup>
+    <!-- Versioning -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0 (stable)</InformationalVersion>
 
-    <ItemGroup>
-        <None Update="log4net.config">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
+    <!-- App information -->
+    <Authors>Mark Collins</Authors>
+    <Company>Your Company or GitHub</Company>
+    <Product>Music Library Scanner</Product>
+    <Description>Scans a music library, extracts metadata, and stores it in Postgres.</Description>
+    <PackageProjectUrl>https://github.com/mdcollins-net/MusicLibraryScanner</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mdcollins-net/MusicLibraryScanner</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NuGet dependencies -->
+    <PackageReference Include="log4net" Version="2.0.15" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.3.24209.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.3.24209.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0-preview.3.24209.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Config files: always copy -->
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
