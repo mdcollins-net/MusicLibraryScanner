@@ -34,7 +34,7 @@ namespace MusicLibraryScanner.Services {
                     var artistName = ParsingHelpers.ParseArtistName(artistDir);
                     var artistId = await GetOrCreateArtistIdAsync(artistName);
 
-                    Log.Info($"Processing artist: {artistName} (ID={artistId})");
+                    Log.Debug($"Processing artist: {artistName} (ID={artistId})");
 
                     var albumDirs = Directory.GetDirectories(artistDir);
 
@@ -51,7 +51,7 @@ namespace MusicLibraryScanner.Services {
             }
             finally {
                 stats.Stop();
-                stats.PrintReport(); // outputs to console + log
+                stats.PrintReport(); // INFO level inside ProcessingStats → Console + File
             }
         }
 
@@ -79,7 +79,7 @@ namespace MusicLibraryScanner.Services {
             var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
             var albumId = await GetOrCreateAlbumIdAsync(artistId, albumTitle, year);
 
-            Log.Info($"  Processing album: {year} - {albumTitle} (ID={albumId})");
+            Log.Debug($"  Processing album: {year} - {albumTitle} (ID={albumId})");
 
             var trackFiles = Directory.GetFiles(albumDir, "*.flac");
 
@@ -137,7 +137,7 @@ namespace MusicLibraryScanner.Services {
                 );
                 stats.IncrementTrack();
 
-                Log.Info($"    Track added: {trackNumber:00} - {trackTitle} (ID={trackId}, {duration}s)");
+                Log.Debug($"    Track added: {trackNumber:00} - {trackTitle} (ID={trackId}, {duration}s)");
             }
             catch (Exception ex) {
                 Log.Error($"    Failed to process track '{trackFile}': {ex.Message}", ex);
