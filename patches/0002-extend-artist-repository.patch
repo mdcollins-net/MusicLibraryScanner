@@ -1,0 +1,49 @@
+From 9876543210abcdef9876543210abcdef98765432 Mon Sep 17 00:00:00 2001
+From: Mark <your.email@example.com>
+Date: Fri, 3 Oct 2025 15:05:00 +0200
+Subject: [PATCH] Extend ArtistRepository to handle new Artist fields
+
+---
+ Repositories/ArtistRepository.cs | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/Repositories/ArtistRepository.cs b/Repositories/ArtistRepository.cs
+index 1234abc..5678def 100644
+--- a/Repositories/ArtistRepository.cs
++++ b/Repositories/ArtistRepository.cs
+@@ -11,7 +11,22 @@ namespace MusicLibraryScanner.Repositories {
+ 
+     public class ArtistRepository(PostgresConnectionFactory connFactory) : IArtistRepository {
+         public async Task<int> GetOrCreateIdAsync(string name) {
+-            using var conn = connFactory.CreateConnection();
+-            const string selectSql = "SELECT Id FROM Artists WHERE Name = @Name LIMIT 1";
+-            var existing = await conn.QueryFirstOrDefaultAsync<int?>(selectSql, new { Name = name });
+-            if (existing.HasValue) return existing.Value;
+-
+-            const string insertSql = "INSERT INTO Artists (Name) VALUES (@Name) RETURNING Id";
+-            return await conn.ExecuteScalarAsync<int>(insertSql, new { Name = name });
++            using var conn = connFactory.CreateConnection();
++
++            const string selectSql = "SELECT Id FROM Artists WHERE Name = @Name LIMIT 1";
++            var existing = await conn.QueryFirstOrDefaultAsync<int?>(selectSql, new { Name = name });
++            if (existing.HasValue) return existing.Value;
++
++            const string insertSql = @"
++                INSERT INTO Artists 
++                    (Name, DiscogsArtistId, MusicBrainzArtistId, AudioDbArtistId, Biography)
++                VALUES 
++                    (@Name, @DiscogsArtistId, @MusicBrainzArtistId, @AudioDbArtistId, @Biography)
++                RETURNING Id";
++
++            return await conn.ExecuteScalarAsync<int>(insertSql, new {
++                Name = name,
++                DiscogsArtistId = (int?)null,
++                MusicBrainzArtistId = (Guid?)null,
++                AudioDbArtistId = (int?)null,
++                Biography = (string?)null
++            });
+         }
+     }
+ }
+-- 
+2.42.0

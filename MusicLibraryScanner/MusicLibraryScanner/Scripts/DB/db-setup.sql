@@ -8,7 +8,11 @@ DROP TABLE IF EXISTS Artists CASCADE;
 -- ========================
 CREATE TABLE Artists (
     ID INT GENERATED ALWAYS AS IDENTITY (START WITH 1000 INCREMENT BY 1) PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL UNIQUE
+    Name VARCHAR(255) NOT NULL UNIQUE,
+    DiscogsArtistId INT,
+    MusicBrainzArtistId UUID,
+    AudioDbArtistId INT,
+    Biography TEXT
 );
 
 -- ========================
@@ -19,6 +23,7 @@ CREATE TABLE Albums (
     ArtistId INT NOT NULL,
     Year INT,
     Title VARCHAR(255) NOT NULL,
+    DiscogsReleaseId INT,
     CONSTRAINT FK_Albums_Artists FOREIGN KEY (ArtistId) REFERENCES Artists(ID),
     CONSTRAINT UQ_Albums UNIQUE (ArtistId, Year, Title)
 );

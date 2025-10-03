@@ -3,7 +3,11 @@
     <words>
       <w>albu</w>
       <w>appsettings</w>
+      <w>audiodbartistid</w>
       <w>brainz</w>
+      <w>discogsartistid</w>
+      <w>discogsreleaseid</w>
+      <w>musicbrainzartistid</w>
     </words>
   </dictionary>
 </component>

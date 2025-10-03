@@ -1,14 +1,10 @@
 // Services/MusicScanner.cs
 
-using System;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using log4net;
 
 using MusicLibraryScanner.Helpers;
+using MusicLibraryScanner.Models;
 using MusicLibraryScanner.Repositories;
 
 namespace MusicLibraryScanner.Services {
@@ -37,17 +33,17 @@ namespace MusicLibraryScanner.Services {
                 var artistDirs = Directory.GetDirectories(rootPath);
 
                 foreach (var artistDir in artistDirs) {
-                    var artistName = ParsingHelpers.ParseArtistName(artistDir);
-                    var artistId = await GetOrCreateArtistIdAsync(artistName);
+                    var artist = await LoadArtistFromDirectoryAsync(artistDir);
+                    var artistId = await GetOrCreateArtistIdAsync(artist);
 
-                    Log.Debug($"Processing artist: {artistName} (ID={artistId})");
+                    Log.Debug($"Processing artist: {artist.Name} (ID={artistId})");
 
                     var albumDirs = Directory.GetDirectories(artistDir);
 
                     using var albumSemaphore = new SemaphoreSlim(MaxConcurrentAlbums);
 
                     var albumTasks = albumDirs.Select(albumDir =>
-                        ProcessAlbumWithSemaphoreAsync(albumDir, artistId, artistName, albumSemaphore, stats));
+                        ProcessAlbumWithSemaphoreAsync(albumDir, artistId, artist.Name, albumSemaphore, stats));
                     await Task.WhenAll(albumTasks);
 
                     stats.IncrementArtist();
@@ -61,8 +57,52 @@ namespace MusicLibraryScanner.Services {
             }
         }
 
-        private async Task<int> GetOrCreateArtistIdAsync(string artistName) {
-            return _artistCache.GetOrAdd(artistName, _ => artistRepo.GetOrCreateIdAsync(artistName).Result);
+        private static async Task<Artist> LoadArtistFromDirectoryAsync(string artistDir) {
+            var artistName = ParsingHelpers.ParseArtistName(artistDir);
+            var nfoPath = Path.Combine(artistDir, "artist.nfo");
+
+            if (!File.Exists(nfoPath)) return new Artist { Name = artistName };
+            try {
+                var parsed = ArtistNfoParser.Parse(nfoPath);
+                if (parsed != null) {
+                    Log.Debug($"Loaded artist metadata from NFO for '{artistName}'");
+                    return parsed;
+                }
+            }
+            catch (Exception ex) {
+                Log.Warn($"Failed to parse artist.nfo for '{artistName}': {ex.Message}");
+            }
+
+            // fallback to minimal Artist
+            return new Artist { Name = artistName };
+        }
+
+        private static async Task<Album> LoadAlbumFromDirectoryAsync(string albumDir) {
+            var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
+            var nfoPath = Path.Combine(albumDir, "album.nfo");
+
+            if (!File.Exists(nfoPath)) return new Album { Title = albumTitle, Year = year};
+            try {
+                var parsed = AlbumNfoParser.Parse(nfoPath);
+                if (parsed != null) {
+                    Log.Debug($"Loaded album metadata from NFO for '{albumTitle}'");
+                    return parsed;
+                }
+            }
+            catch (Exception ex) {
+                Log.Warn($"Failed to parse album.nfo for '{albumTitle}': {ex.Message}");
+            }
+
+            // fallback to minimal Artist
+            return new Album {
+                Title = albumTitle,
+                Year = year
+            };
+        }
+
+        private async Task<int> GetOrCreateArtistIdAsync(Artist artist) {
+            return _artistCache.GetOrAdd(artist.Name,
+                _ => artistRepo.GetOrCreateIdAsync(artist).Result);
         }
 
         private async Task<int> GetOrCreateAlbumIdAsync(int artistId, string albumTitle, int year) {
@@ -83,6 +123,7 @@ namespace MusicLibraryScanner.Services {
 
         private async Task ProcessAlbumAsync(string albumDir, int artistId, string artistName, ProcessingStats stats) {
             var (year, albumTitle) = ParsingHelpers.ParseAlbumFolder(albumDir);
+            var album = await LoadAlbumFromDirectoryAsync(albumDir);
             var albumId = await GetOrCreateAlbumIdAsync(artistId, albumTitle, year);
 
             Log.Debug($"  Processing album: {year} - {albumTitle} (ID={albumId})");

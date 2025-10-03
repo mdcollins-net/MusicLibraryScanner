@@ -1,0 +1,30 @@
+From 1234567890abcdef1234567890abcdef12345678 Mon Sep 17 00:00:00 2001
+From: Mark <your.email@example.com>
+Date: Fri, 3 Oct 2025 15:00:00 +0200
+Subject: [PATCH] Add new fields to Artist model
+
+---
+ Models/Artist.cs | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/Models/Artist.cs b/Models/Artist.cs
+index e69de29..a1b2c3d 100644
+--- a/Models/Artist.cs
++++ b/Models/Artist.cs
+@@ -1,6 +1,14 @@
+ namespace MusicLibraryScanner.Models {
+     public class Artist {
+         public int Id { get; set; }
+         public string Name { get; set; }
++
++        // New metadata fields
++        public int? DiscogsArtistId { get; set; }
++        public Guid? MusicBrainzArtistId { get; set; }
++        public int? AudioDbArtistId { get; set; }
++        
++        // Allow up to 2000 characters
++        public string? Biography { get; set; }
+     }
+ }
+-- 
+2.42.0
