@@ -5,27 +5,36 @@ using MusicLibraryScanner.Models;
 
 namespace MusicLibraryScanner.Helpers {
     public static class AlbumNfoParser {
-        public static Album? Parse(string nfoPath) {
+        /// <summary>
+        /// Parse an album.nfo file into an Album object.
+        /// Returns null if the file doesn't exist or parsing fails.
+        /// </summary>
+        public static Album? Parse(string nfoPath, int artistId) {
             if (!File.Exists(nfoPath))
                 return null;
 
             try {
                 var doc = XDocument.Load(nfoPath);
-                var root = doc.Element("album");
-                if (root == null) return null;
+                var albumElement = doc.Element("album");
+                if (albumElement == null) return null;
 
-                var album = new Album {
-                    Title = root.Element("title")?.Value ?? string.Empty,
+                var title = albumElement.Element("title")?.Value?.Trim();
+                var yearText = albumElement.Element("year")?.Value?.Trim();
+                var discogsIdText = albumElement.Element("discogsreleaseid")?.Value?.Trim();
+
+                int? year = int.TryParse(yearText, out var parsedYear) ? parsedYear : null;
+                int? discogsReleaseId = int.TryParse(discogsIdText, out var parsedDiscogs) ? parsedDiscogs : null;
+
+                return new Album {
+                    ArtistID = artistId,
+                    Title = title ?? "Unknown Album",
+                    Year = year,
+                    DiscogsReleaseId = discogsReleaseId
                 };
-
-                // Discogs ID
-                if (int.TryParse(root.Element("discogsreleaseid")?.Value, out var discogsId)) {
-                    album.DiscogsArtistId = discogsId;
-                }
-                return album;
             }
             catch (Exception ex) {
-                Console.WriteLine($"Failed to parse {nfoPath}: {ex.Message}");
+                // TODO: inject logging if you want detailed info
+                Console.WriteLine($"[WARN] Failed to parse album NFO '{nfoPath}': {ex.Message}");
                 return null;
             }
         }

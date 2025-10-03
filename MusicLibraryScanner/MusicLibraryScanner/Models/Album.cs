@@ -6,6 +6,6 @@ namespace MusicLibraryScanner.Models {
         public int ArtistID { get; set; } // FK -> Artists.ID
         public int? Year { get; set; }
         public string Title { get; set; }
-        public int? DiscogsArtistId { get; set; }
+        public int? DiscogsReleaseId  { get; set; }
     }
 }
