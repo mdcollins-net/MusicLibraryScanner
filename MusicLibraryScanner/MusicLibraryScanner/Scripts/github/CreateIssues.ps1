@@ -1,18 +1,18 @@
 param (
   [string]$Repo = "mdcollins-net/MusicLibraryScanner",
-  [string]$ProjectNumber = "4",      # 👈 Update this with your project number
+  [string]$ProjectNumber = "1",        # 👈 Update this with your project number
   [string]$Assignee = "mdcollins-net"  # 👈 Your GitHub username
 )
 
 Write-Host "🚀 Creating labels..." -ForegroundColor Cyan
 
-# Labels
-gh label create "logging"     --color FF8800 --repo $Repo 2>$null
-gh label create "discogs"     --color 0066CC --repo $Repo 2>$null
-gh label create "config"      --color 33AA33 --repo $Repo 2>$null
-gh label create "parser"      --color AA33AA --repo $Repo 2>$null
-gh label create "refactor"    --color 999999 --repo $Repo 2>$null
-gh label create "planned"     --color 000000 --repo $Repo 2>$null
+# Labels (ignore errors if they already exist)
+gh label create "logging"  --color FF8800 --repo $Repo 2>$null
+gh label create "discogs"  --color 0066CC --repo $Repo 2>$null
+gh label create "config"   --color 33AA33 --repo $Repo 2>$null
+gh label create "parser"   --color AA33AA --repo $Repo 2>$null
+gh label create "refactor" --color 999999 --repo $Repo 2>$null
+gh label create "planned"  --color 000000 --repo $Repo 2>$null
 
 Write-Host "✅ Labels created." -ForegroundColor Green
 
@@ -26,30 +26,28 @@ function New-Issue {
         [string]$Milestone
     )
 
-    $labelsArg = $Labels | ForEach-Object { "--label `"$($_)`"" } | Out-String
-    $labelsArg = $labelsArg -replace "`r`n"," "  # flatten
-    
-    # Create the issue (with assignee)
+    # Turn labels array into repeated -l flags
+    $labelArgs = @()
+    foreach ($lbl in $Labels) {
+        $labelArgs += @("-l", $lbl)
+    }
+
+    # Create the issue
     $issueUrl = gh issue create `
         --title "$Title" `
         --body "$Body" `
-        $labelsArg `
-        --milestone "$Milestone" `
-        --assignee "$Assignee" `
+        @labelArgs `
+        -m "$Milestone" `
+        -a "$Assignee" `
         --repo $Repo `
         --json url `
         --jq ".url"
 
     Write-Host "📌 Created issue: $issueUrl"
 
-    # Add issue to project board
+    # Add to project board + set status
     gh project item-add $ProjectNumber --url $issueUrl --repo $Repo | Out-Null
-
-    # Explicitly set status field to "Todo"
-    gh project item-edit $ProjectNumber `
-        --url $issueUrl `
-        --field "Status" --value "Todo" `
-        --repo $Repo | Out-Null
+    gh project item-edit $ProjectNumber --url $issueUrl --field "Status" --value "Todo" --repo $Repo | Out-Null
 
     Write-Host "   ↳ Added to Project #$ProjectNumber (Status=Todo, Assignee=$Assignee)"
 }
