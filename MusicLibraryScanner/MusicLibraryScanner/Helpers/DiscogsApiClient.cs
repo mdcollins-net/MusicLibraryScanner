@@ -5,6 +5,10 @@ using System.Text.Json;
 
 namespace MusicLibraryScanner.Helpers {
     public class DiscogsApiClient {
+
+        //TODO: Refactor: use var, invert if to reduce nesting
+        //TODO: Reformat consistent with rest of project
+
         private readonly HttpClient _httpClient;
         private readonly int _minDelayMs = 1100; // ~1 request/sec to stay safe with rate limits
 
